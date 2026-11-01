@@ -1,0 +1,16 @@
+[Unit]
+Description=ShariaGuard SGRC Studio (kantor 3D)
+After=network-online.target sgrc-gateway.service
+Requires=sgrc-gateway.service
+
+[Service]
+WorkingDirectory=/opt/sgrc-office
+EnvironmentFile=/opt/sgrc-office/.env
+ExecStart=/usr/bin/node server/index.js
+Restart=always
+RestartSec=3
+User=sgrc
+StateDirectory=sgrc-office
+
+[Install]
+WantedBy=multi-user.target
