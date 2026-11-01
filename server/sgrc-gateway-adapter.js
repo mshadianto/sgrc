@@ -7,14 +7,15 @@
 // LLM: OpenAI-compatible (SumoPod) via server/sgrc/llm.js. Tanpa API key → mode demo.
 
 try {
-  process.loadEnvFile?.(); // baca .env di folder kerja bila ada (Node 20.12+)
+  // baca .env (atau SGRC_ENV_FILE) di folder kerja bila ada (Node 20.12+)
+  process.loadEnvFile?.(process.env.SGRC_ENV_FILE || ".env");
 } catch {}
 
 const http = require("http");
 const { randomUUID } = require("crypto");
 const { WebSocketServer } = require("ws");
 
-const { AGENTS, buildSystemPrompt } = require("./sgrc/agents");
+const { AGENTS, ROSTER, buildSystemPrompt } = require("./sgrc/agents");
 const { redact, AuditChain, sha } = require("./sgrc/guard");
 const llm = require("./sgrc/llm");
 
@@ -22,10 +23,10 @@ const ADAPTER_PORT = parseInt(process.env.SGRC_ADAPTER_PORT || process.env.HERME
 const ADAPTER_HOST = process.env.SGRC_ADAPTER_HOST || "127.0.0.1";
 const GATEWAY_TOKEN = process.env.SGRC_GATEWAY_TOKEN || "";
 const MAIN_KEY = "main";
-const DEFAULT_ID = "sgrc-mudir";
+const DEFAULT_ID = ROSTER.defaultId;
 const MAX_HISTORY = 16;
 const TENANT = {
-  name: process.env.SGRC_TENANT_NAME || "BPRS Demo",
+  name: process.env.SGRC_TENANT_NAME || ROSTER.tenantDefault,
   tier: process.env.SGRC_TENANT_TIER || "",
 };
 const APPROVAL_FOOTER =
@@ -86,12 +87,7 @@ function presenceFrame(sessionKey, agentId) {
 
 // ---------- Routing Mudir ----------
 
-const ROUTES = [
-  { id: "sgrc-muhasib", re: /\b(audit|auditor|temuan|5c|program audit|uji populasi|tindak lanjut temuan|kertas kerja|pkpt)\b/i },
-  { id: "sgrc-raqib", re: /\b(dps|opini|fatwa|rapat dps|risalah|laporan hasil pengawasan|khilaf|dsn|majelis)\b/i },
-  { id: "sgrc-multazim", re: /\b(kepatuhan|sop|kebijakan|promosi|brosur|gap analysis|komitmen ojk|pelatihan|dana non.?halal|zakat|bagi hasil)\b/i },
-  { id: "sgrc-haris", re: /\b(risiko|risk|sncr|kri|heatmap|limit|appetite|profil risiko|produk baru|mitigasi)\b/i },
-];
+const ROUTES = ROSTER.routes;
 
 function keywordRoute(message) {
   for (const r of ROUTES) if (r.re.test(message)) return r.id;
@@ -104,12 +100,12 @@ async function routeMessage(message, signal) {
   try {
     const answer = await llm.completeOnce({
       signal,
-      system:
-        "Anda router kantor SGRC. Pilih SATU kata saja: haris (risiko syariah, SNCR, KRI, produk baru), multazim (kepatuhan, kebijakan, SOP, promosi, OJK), raqib (DPS, opini syariah, fatwa, rapat DPS, laporan DPS), muhasib (audit intern, temuan, program audit), mudir (sapaan, umum, koordinasi lintas fungsi, kalender).",
+      system: ROSTER.routerPrompt,
       user: message.slice(0, 1500),
     });
-    const word = answer.toLowerCase().match(/haris|multazim|raqib|muhasib|mudir/);
-    return word ? `sgrc-${word[0]}` : fallback;
+    const lower = answer.toLowerCase();
+    const word = Object.keys(ROSTER.routerWords).find((w) => lower.includes(w));
+    return word ? ROSTER.routerWords[word] : fallback;
   } catch {
     return fallback;
   }
@@ -119,13 +115,7 @@ async function routeMessage(message, signal) {
 
 function demoReply(agent, message) {
   const fokus = message.replace(/\s+/g, " ").slice(0, 180);
-  const langkah = {
-    "sgrc-mudir": "memetakan permintaan ke fungsi yang tepat, mengecek kalender kepatuhan, dan merangkum hasil kerja tim.",
-    "sgrc-haris": "memperbarui SNCR register, menilai risiko inheren/residual, dan mengusulkan mitigasi beserta pemilik dan tenggat.",
-    "sgrc-multazim": "menyusun gap analysis terhadap fatwa DSN-MUI dan POJK 25/2024, lalu checklist kepatuhan per ketentuan.",
-    "sgrc-raqib": "menyusun draf opini terstruktur (fakta → rujukan → analisis → opini → syarat) untuk diputuskan DPS.",
-    "sgrc-muhasib": "menyusun program audit per akad dan draf temuan format 5C, dengan menjaga independensi lini ketiga.",
-  }[agent.id];
+  const langkah = ROSTER.demo[agent.id] || "mengerjakan permintaan sesuai peran saya.";
   return `**${agent.name} · ${agent.role}** (${agent.floor})\n\nPermintaan diterima: “${fokus}”.\n\nSaya akan ${langkah}\n\n_Mode demo: mesin AI (SumoPod) belum dikonfigurasi, jadi ini jawaban contoh. Isi \`SGRC_LLM_API_KEY\` untuk jawaban sungguhan._\n\n**Tindak lanjut:** ${agent.owner}.`;
 }
 
@@ -530,7 +520,7 @@ function startAdapter() {
   const httpServer = http.createServer((req, res) => {
     if (req.url === "/health") {
       res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ ok: true, live: llm.isLive(), model: llm.MODEL, routerModel: llm.ROUTER_MODEL, fallbackModel: llm.FALLBACK_MODEL || null, agents: agents.size }));
+      res.end(JSON.stringify({ ok: true, roster: ROSTER.id, live: llm.isLive(), model: llm.MODEL, routerModel: llm.ROUTER_MODEL, fallbackModel: llm.FALLBACK_MODEL || null, agents: agents.size }));
       return;
     }
     if (req.url === "/audit/verify") {
@@ -539,7 +529,7 @@ function startAdapter() {
       return;
     }
     res.writeHead(200, { "Content-Type": "text/plain; charset=utf-8" });
-    res.end("ShariaGuard SGRC Gateway Adapter\n");
+    res.end(`ShariaGuard Gateway Adapter — ${ROSTER.title}\n`);
   });
 
   const wss = new WebSocketServer({ server: httpServer });
@@ -609,7 +599,7 @@ function startAdapter() {
   });
 
   httpServer.listen(ADAPTER_PORT, ADAPTER_HOST, () => {
-    console.log(`[sgrc-gateway] Listening on ws://${ADAPTER_HOST}:${ADAPTER_PORT}`);
+    console.log(`[sgrc-gateway] ${ROSTER.title} (roster ${ROSTER.id}) listening on ws://${ADAPTER_HOST}:${ADAPTER_PORT}`);
     console.log(
       llm.isLive()
         ? `[sgrc-gateway] Mesin AI aktif: ${llm.MODEL} (router: ${llm.ROUTER_MODEL}, cadangan: ${llm.FALLBACK_MODEL || "-"}) via ${llm.BASE_URL}`
