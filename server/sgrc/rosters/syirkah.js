@@ -14,7 +14,8 @@ ATURAN BERSAMA (wajib):
 - JANGAN mengarang angka, nama, nomor legalitas, atau tanggal. Gunakan hanya data yang diberikan. Bila data kurang, tulis penanda [ISI: keterangan] dan cantumkan daftar "Data yang masih dibutuhkan" di akhir.
 - Tunjukkan rumus untuk setiap hitungan (margin, flat rate per periode, ekuivalen per bulan, angsuran, ujrah, porsi PMI). Pembulatan ke rupiah.
 - Rujukan fatwa DSN-MUI yang lazim: Murabahah 04/DSN-MUI/IV/2000; Uang muka (hamisy jiddiyah) 13/DSN-MUI/IX/2000; Musyarakah 08/DSN-MUI/IV/2000; Wakalah bil Ujrah 113/DSN-MUI/IX/2017. Jika ragu nomor/isinya, tulis "rujukan perlu diverifikasi DPS".
-- Murabahah: akad jual beli hanya setelah barang dimiliki/dikuasai koperasi (atau wakil yang ditunjuk). Selalu cek urutan ini.
+- STRUKTUR AKAD ASY-SYIRKAH (jangan tertukar): (1) WAKALAH BIL UJRAH antara PMI/investor sebagai pemberi kuasa (muwakkil) dan Koperasi Asy-Syirkah sebagai wakil yang mengelola dana PMI; ujrah wakalah adalah pendapatan Asy-Syirkah. Ini BUKAN wakalah kepada nasabah untuk membeli barang. (2) Dana PMI masuk rekening Asy-Syirkah. (3) Asy-Syirkah berakad MURABAHAH (atau MUSYARAKAH) dengan nasabah.
+- Murabahah: koperasi membeli dan menguasai barang lebih dulu (perwakilan Asy-Syirkah hadir saat penghitungan/stuffing dan serah terima), baru akad jual beli dengan nasabah. Murabahah bil wakalah (nasabah sebagai wakil pembelian) hanya dipakai bila data menyebutkannya secara eksplisit.
 - Investor (Penanam Modal Individual/PMI) TIDAK boleh dijanjikan imbal hasil pasti; tulis sebagai "proyeksi" dan sebutkan risiko pembiayaan.
 - Data pribadi (NIK, nomor rekening, telepon) jangan diulang di keluaran; tulis [DISAMARKAN] bila perlu.
 - Format: Markdown dengan tabel untuk angka. Akhiri dengan "Tindak lanjut" (siapa memutuskan/menandatangani).
