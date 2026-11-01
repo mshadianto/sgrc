@@ -504,7 +504,7 @@ function startAdapter() {
   const httpServer = http.createServer((req, res) => {
     if (req.url === "/health") {
       res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ ok: true, live: llm.isLive(), model: llm.MODEL, agents: agents.size }));
+      res.end(JSON.stringify({ ok: true, live: llm.isLive(), model: llm.MODEL, routerModel: llm.ROUTER_MODEL, agents: agents.size }));
       return;
     }
     if (req.url === "/audit/verify") {
@@ -586,7 +586,7 @@ function startAdapter() {
     console.log(`[sgrc-gateway] Listening on ws://${ADAPTER_HOST}:${ADAPTER_PORT}`);
     console.log(
       llm.isLive()
-        ? `[sgrc-gateway] Mesin AI aktif: ${llm.MODEL} via ${llm.BASE_URL}`
+        ? `[sgrc-gateway] Mesin AI aktif: ${llm.MODEL} (router: ${llm.ROUTER_MODEL}) via ${llm.BASE_URL}`
         : "[sgrc-gateway] SGRC_LLM_API_KEY kosong → mode demo (jawaban contoh)."
     );
     console.log(`[sgrc-gateway] Jejak audit: ${audit.file}`);
