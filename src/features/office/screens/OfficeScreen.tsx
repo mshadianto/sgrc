@@ -1068,7 +1068,10 @@ export function OfficeScreen({
   const activeFloorId = DEFAULT_ACTIVE_FLOOR_ID;
   const [gatewayModels, setGatewayModels] = useState<GatewayModelChoice[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [marketplaceOpen, setMarketplaceOpen] = useState(false);
+  // Kantor SGRC/Asy-Syirkah: skill agen ditanam di gateway, marketplace Hermes tidak berlaku.
+  const MARKETPLACE_ENABLED = false;
+  const [marketplaceOpenRaw, setMarketplaceOpen] = useState(false);
+  const marketplaceOpen = MARKETPLACE_ENABLED && marketplaceOpenRaw;
   // Office renderer preference (3D immersive vs. 2D pixel). Resolved after
   // mount so SSR markup stays deterministic.
   const [officeRenderMode, setOfficeRenderMode] = useState<OfficeRenderMode>("3d");
@@ -4876,7 +4879,7 @@ export function OfficeScreen({
           inboxCount={unseenInboxCount}
           onToggle={() => setSidebarOpen((prev) => !prev)}
           onTabChange={setActiveSidebarTab}
-          onOpenMarketplace={() => setMarketplaceOpen(true)}
+          onOpenMarketplace={MARKETPLACE_ENABLED ? () => setMarketplaceOpen(true) : undefined}
           onAddAgent={handleOpenCreateAgentWizard}
           onOpenCompanyBuilder={handleOpenCompanyBuilder}
           inboxPanel={

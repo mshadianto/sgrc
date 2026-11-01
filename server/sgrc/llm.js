@@ -94,15 +94,16 @@ async function streamChat({ system, messages, model, onDelta, onMeta, signal }) 
 }
 
 /** Panggilan singkat tanpa streaming (untuk routing Mudir). */
-async function completeOnce({ system, user, model, signal }) {
+async function completeOnce({ system, user, model, signal, onUsage }) {
   const res = await fetch(`${BASE_URL}/chat/completions`, {
     method: "POST",
     signal,
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${API_KEY}` },
     body: JSON.stringify({
       model: model || ROUTER_MODEL,
-      max_tokens: 10,
+      max_tokens: 16,
       temperature: 0,
+      thinking: { type: "disabled" }, // jawaban 1 kata; jangan habiskan token untuk berpikir
       messages: [
         { role: "system", content: system },
         { role: "user", content: user },
@@ -111,6 +112,7 @@ async function completeOnce({ system, user, model, signal }) {
   });
   if (!res.ok) throw new Error(`LLM ${res.status}`);
   const json = await res.json();
+  if (json.usage) onUsage?.({ input: json.usage.prompt_tokens ?? 0, output: json.usage.completion_tokens ?? 0 });
   return String(json.choices?.[0]?.message?.content || "").trim();
 }
 

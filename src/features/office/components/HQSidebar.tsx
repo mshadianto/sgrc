@@ -15,7 +15,7 @@ type HQSidebarProps = {
   inboxCount: number;
   onToggle: () => void;
   onTabChange: (tab: HQSidebarTab) => void;
-  onOpenMarketplace: () => void;
+  onOpenMarketplace?: () => void;
   onAddAgent?: () => void;
   onOpenCompanyBuilder?: () => void;
   inboxPanel: ReactNode;
@@ -79,6 +79,7 @@ export function HQSidebar({
           </span>
         </button>
 
+        {onOpenMarketplace ? (
         <button
           type="button"
           onClick={() => {
@@ -91,6 +92,7 @@ export function HQSidebar({
             MARKETPLACE
           </span>
         </button>
+        ) : null}
 
         <button
           type="button"

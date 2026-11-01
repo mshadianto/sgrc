@@ -18,6 +18,7 @@ const { WebSocketServer } = require("ws");
 const { AGENTS, ROSTER, buildSystemPrompt } = require("./sgrc/agents");
 const { redact, AuditChain, sha } = require("./sgrc/guard");
 const llm = require("./sgrc/llm");
+const usage = require("./sgrc/usage");
 
 const ADAPTER_PORT = parseInt(process.env.SGRC_ADAPTER_PORT || process.env.HERMES_ADAPTER_PORT || "18789", 10);
 const ADAPTER_HOST = process.env.SGRC_ADAPTER_HOST || "127.0.0.1";
@@ -102,6 +103,7 @@ async function routeMessage(message, signal) {
       signal,
       system: ROSTER.routerPrompt,
       user: message.slice(0, 1500),
+      onUsage: (u) => audit.append({ action: "route.usage", model: llm.ROUTER_MODEL, usage: u }),
     });
     const lower = answer.toLowerCase();
     const word = Object.keys(ROSTER.routerWords).find((w) => lower.includes(w));
@@ -141,7 +143,12 @@ async function runAgent({ agent, sessionKey, message, runId, sendEvent, isAborte
   let usedModel = "demo";
   let fellBack = false;
   let meta = { finish: null, usage: null };
-  if (llm.isLive()) {
+  const budget = llm.isLive() ? usage.budgetStatus(audit.file) : { ok: true };
+  if (!budget.ok) {
+    usedModel = "-";
+    reply = `⛔ Batas anggaran ${budget.scope} mesin AI kantor ini sudah tercapai (US$${budget.used.toFixed(2)} dari US$${budget.limit.toFixed(2)}). Permintaan tidak diproses. Hubungi admin untuk menaikkan batas (SGRC_BUDGET_${budget.scope === "harian" ? "DAILY" : "MONTHLY"}_USD).`;
+    audit.append({ action: "budget.blocked", agent: agent.id, runId, scope: budget.scope, used: Number(budget.used.toFixed(4)), limit: budget.limit });
+  } else if (llm.isLive()) {
     const settings = sessionSettings.get(sessionKey) || {};
     const primary = settings.model || llm.MODEL;
     const attempt = (model, prefix = "") =>
@@ -307,6 +314,12 @@ async function handleMethod(method, params, id, sendEvent) {
         })),
       });
     }
+
+    case "sessions.usage":
+      return resOk(id, usage.sessionsUsage(audit.file, { startDate: p.startDate, endDate: p.endDate }, sessionKeyFor));
+
+    case "usage.cost":
+      return resOk(id, usage.usageCost(audit.file, { startDate: p.startDate, endDate: p.endDate }));
 
     case "cron.list":
       return resOk(id, { jobs: [] });
@@ -520,7 +533,7 @@ const METHODS = [
   "agents.list", "agents.update", "sessions.list", "sessions.preview", "sessions.patch", "sessions.reset",
   "chat.send", "chat.abort", "chat.history", "agent.wait", "status", "config.get", "config.set", "config.patch",
   "agents.files.get", "agents.files.set", "exec.approvals.get", "exec.approvals.set", "exec.approval.resolve",
-  "wake", "skills.status", "models.list", "cron.list",
+  "wake", "skills.status", "models.list", "cron.list", "sessions.usage", "usage.cost",
 ];
 
 function startAdapter() {
