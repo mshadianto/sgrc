@@ -140,6 +140,7 @@ async function runAgent({ agent, sessionKey, message, runId, sendEvent, isAborte
   let reply;
   let usedModel = "demo";
   let fellBack = false;
+  let meta = { finish: null, usage: null };
   if (llm.isLive()) {
     const settings = sessionSettings.get(sessionKey) || {};
     const primary = settings.model || llm.MODEL;
@@ -149,6 +150,9 @@ async function runAgent({ agent, sessionKey, message, runId, sendEvent, isAborte
         model,
         messages: [...history.slice(-MAX_HISTORY), { role: "user", content: safeMessage }],
         signal: controller.signal,
+        onMeta: (m) => {
+          meta = m;
+        },
         onDelta: (partial) => {
           if (!isAborted()) emitChat("delta", { message: { role: "assistant", content: prefix + partial } });
         },
@@ -199,6 +203,9 @@ async function runAgent({ agent, sessionKey, message, runId, sendEvent, isAborte
     return null;
   }
 
+  if (meta.finish === "length") {
+    reply += "\n\n_(Jawaban terpotong karena batas panjang. Ketik **lanjutkan** untuk meneruskan.)_";
+  }
   const finalText = reply + APPROVAL_FOOTER + `\n\n_Mesin: ${usedModel}${fellBack ? " (cadangan)" : ""}_`;
   history.push({ role: "user", content: safeMessage });
   history.push({ role: "assistant", content: reply });
@@ -206,7 +213,7 @@ async function runAgent({ agent, sessionKey, message, runId, sendEvent, isAborte
 
   emitChat("final", { stopReason: "end_turn", message: { role: "assistant", content: finalText } });
   sendEvent(presenceFrame(sessionKey, agent.id));
-  audit.append({ action: "draft.ready", agent: agent.id, runId, model: usedModel, fallback: fellBack, outputHash: sha(reply), status: "menunggu-persetujuan-manusia" });
+  audit.append({ action: "draft.ready", agent: agent.id, runId, model: usedModel, fallback: fellBack, finish: meta.finish, usage: meta.usage, outputHash: sha(reply), status: "menunggu-persetujuan-manusia" });
   return reply;
 }
 
@@ -520,7 +527,7 @@ function startAdapter() {
   const httpServer = http.createServer((req, res) => {
     if (req.url === "/health") {
       res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ ok: true, roster: ROSTER.id, live: llm.isLive(), model: llm.MODEL, routerModel: llm.ROUTER_MODEL, fallbackModel: llm.FALLBACK_MODEL || null, agents: agents.size }));
+      res.end(JSON.stringify({ ok: true, roster: ROSTER.id, live: llm.isLive(), model: llm.MODEL, routerModel: llm.ROUTER_MODEL, reasoning: llm.REASONING, maxTokens: llm.MAX_TOKENS, fallbackModel: llm.FALLBACK_MODEL || null, agents: agents.size }));
       return;
     }
     if (req.url === "/audit/verify") {
