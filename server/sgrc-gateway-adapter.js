@@ -31,9 +31,11 @@ const TENANT = {
 const APPROVAL_FOOTER =
   "\n\n---\n⚖️ *DRAF AI — bukan opini hukum maupun opini syariah. Keputusan dan tanda tangan tetap pada pejabat berwenang.*";
 
-const MODELS = [
-  { id: llm.MODEL, name: `${llm.MODEL} (SumoPod)`, provider: "sumopod" },
-];
+const MODELS = [...new Set([llm.MODEL, llm.FALLBACK_MODEL].filter(Boolean))].map((id) => ({
+  id,
+  name: id === llm.MODEL ? `${id} (utama)` : `${id} (cadangan)`,
+  provider: "sumopod",
+}));
 
 const agents = new Map(AGENTS.map((a) => [a.id, { ...a, workspace: `/sgrc/${a.id}` }]));
 const files = new Map();
@@ -146,25 +148,49 @@ async function runAgent({ agent, sessionKey, message, runId, sendEvent, isAborte
 
   const history = getHistory(sessionKey);
   let reply;
+  let usedModel = "demo";
+  let fellBack = false;
   if (llm.isLive()) {
-    try {
-      const settings = sessionSettings.get(sessionKey) || {};
-      reply = await llm.streamChat({
+    const settings = sessionSettings.get(sessionKey) || {};
+    const primary = settings.model || llm.MODEL;
+    const attempt = (model, prefix = "") =>
+      llm.streamChat({
         system: buildSystemPrompt(agent, TENANT),
-        model: settings.model,
+        model,
         messages: [...history.slice(-MAX_HISTORY), { role: "user", content: safeMessage }],
         signal: controller.signal,
         onDelta: (partial) => {
-          if (!isAborted()) emitChat("delta", { message: { role: "assistant", content: partial } });
+          if (!isAborted()) emitChat("delta", { message: { role: "assistant", content: prefix + partial } });
         },
       });
+    try {
+      usedModel = primary;
+      reply = await attempt(primary);
+      if (!String(reply || "").trim()) throw new Error("jawaban kosong");
     } catch (error) {
       if (isAborted()) {
         emitChat("aborted", {});
         audit.append({ action: "task.aborted", agent: agent.id, runId });
         return null;
       }
-      reply = `Maaf, mesin AI sedang tidak dapat dihubungi (${error.message}). Silakan coba lagi.`;
+      const fb = llm.FALLBACK_MODEL;
+      if (fb && fb !== primary) {
+        audit.append({ action: "model.fallback", agent: agent.id, runId, from: primary, to: fb, reason: String(error.message).slice(0, 120) });
+        const note = `_${primary} gagal (${String(error.message).slice(0, 80)}); dialihkan ke ${fb}._\n\n`;
+        try {
+          usedModel = fb;
+          fellBack = true;
+          reply = note + (await attempt(fb, note));
+        } catch (error2) {
+          if (isAborted()) {
+            emitChat("aborted", {});
+            return null;
+          }
+          reply = `Maaf, mesin AI sedang tidak dapat dihubungi (${error2.message}). Silakan coba lagi.`;
+        }
+      } else {
+        reply = `Maaf, mesin AI sedang tidak dapat dihubungi (${error.message}). Silakan coba lagi.`;
+      }
     }
   } else {
     reply = demoReply(agent, safeMessage);
@@ -183,14 +209,14 @@ async function runAgent({ agent, sessionKey, message, runId, sendEvent, isAborte
     return null;
   }
 
-  const finalText = reply + APPROVAL_FOOTER;
+  const finalText = reply + APPROVAL_FOOTER + `\n\n_Mesin: ${usedModel}${fellBack ? " (cadangan)" : ""}_`;
   history.push({ role: "user", content: safeMessage });
   history.push({ role: "assistant", content: reply });
   if (history.length > MAX_HISTORY * 2) history.splice(0, history.length - MAX_HISTORY * 2);
 
   emitChat("final", { stopReason: "end_turn", message: { role: "assistant", content: finalText } });
   sendEvent(presenceFrame(sessionKey, agent.id));
-  audit.append({ action: "draft.ready", agent: agent.id, runId, outputHash: sha(reply), status: "menunggu-persetujuan-manusia" });
+  audit.append({ action: "draft.ready", agent: agent.id, runId, model: usedModel, fallback: fellBack, outputHash: sha(reply), status: "menunggu-persetujuan-manusia" });
   return reply;
 }
 
@@ -504,7 +530,7 @@ function startAdapter() {
   const httpServer = http.createServer((req, res) => {
     if (req.url === "/health") {
       res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ ok: true, live: llm.isLive(), model: llm.MODEL, routerModel: llm.ROUTER_MODEL, agents: agents.size }));
+      res.end(JSON.stringify({ ok: true, live: llm.isLive(), model: llm.MODEL, routerModel: llm.ROUTER_MODEL, fallbackModel: llm.FALLBACK_MODEL || null, agents: agents.size }));
       return;
     }
     if (req.url === "/audit/verify") {
@@ -586,7 +612,7 @@ function startAdapter() {
     console.log(`[sgrc-gateway] Listening on ws://${ADAPTER_HOST}:${ADAPTER_PORT}`);
     console.log(
       llm.isLive()
-        ? `[sgrc-gateway] Mesin AI aktif: ${llm.MODEL} (router: ${llm.ROUTER_MODEL}) via ${llm.BASE_URL}`
+        ? `[sgrc-gateway] Mesin AI aktif: ${llm.MODEL} (router: ${llm.ROUTER_MODEL}, cadangan: ${llm.FALLBACK_MODEL || "-"}) via ${llm.BASE_URL}`
         : "[sgrc-gateway] SGRC_LLM_API_KEY kosong → mode demo (jawaban contoh)."
     );
     console.log(`[sgrc-gateway] Jejak audit: ${audit.file}`);

@@ -6,6 +6,7 @@
 //   SGRC_LLM_API_KEY   (wajib untuk mode nyata; tanpa ini adapter jalan di mode demo)
 //   SGRC_LLM_MODEL     (default claude-sonnet-5-5)
 //   SGRC_LLM_ROUTER_MODEL (opsional, mis. claude-haiku-5-5 untuk routing Mudir)
+//   SGRC_LLM_FALLBACK_MODEL (opsional, mis. claude-sonnet-5-5; dipakai bila model utama gagal/kosong)
 //   SGRC_LLM_MAX_TOKENS (default 1800)
 
 const BASE_URL = (process.env.SGRC_LLM_BASE_URL || "https://ai.sumopod.com/v1").replace(/\/+$/, "");
@@ -13,6 +14,7 @@ const API_KEY = process.env.SGRC_LLM_API_KEY || "";
 const MODEL = process.env.SGRC_LLM_MODEL || "claude-sonnet-5-5";
 // Model murah untuk routing Mudir (jawaban 1 kata). Default = model utama.
 const ROUTER_MODEL = process.env.SGRC_LLM_ROUTER_MODEL || MODEL;
+const FALLBACK_MODEL = process.env.SGRC_LLM_FALLBACK_MODEL || "";
 const MAX_TOKENS = parseInt(process.env.SGRC_LLM_MAX_TOKENS || "1800", 10);
 
 const isLive = () => Boolean(API_KEY);
@@ -87,4 +89,4 @@ async function completeOnce({ system, user, model, signal }) {
   return String(json.choices?.[0]?.message?.content || "").trim();
 }
 
-module.exports = { streamChat, completeOnce, isLive, MODEL, ROUTER_MODEL, BASE_URL };
+module.exports = { streamChat, completeOnce, isLive, MODEL, ROUTER_MODEL, FALLBACK_MODEL, BASE_URL };
