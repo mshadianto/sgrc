@@ -1,3 +1,4 @@
+const { createKatibAkad } = require("./katib-akad");
 const http = require("node:http");
 const https = require("node:https");
 const next = require("next");
@@ -88,6 +89,17 @@ async function main() {
     token: process.env.STUDIO_ACCESS_TOKEN,
   });
 
+  let katibAudit = null;
+  try {
+    const { AuditChain } = require("./sgrc/guard");
+    const stateDir = process.env.HERMES_STATE_DIR || require("node:path").join(require("node:os").homedir(), ".hermes");
+    katibAudit = new AuditChain(require("node:path").join(stateDir, "sgrc", "audit-katib.jsonl"));
+  } catch {}
+  const katib = createKatibAkad({
+    enabled: (process.env.SGRC_ROSTER || "").trim().toLowerCase() === "syirkah",
+    audit: katibAudit,
+  });
+
   const proxy = createGatewayProxy({
     loadUpstreamSettings: async () => {
       const settings = loadUpstreamGatewaySettings(process.env);
@@ -118,10 +130,12 @@ async function main() {
     useHttps
       ? https.createServer(httpsCert, (req, res) => {
           if (accessGate.handleHttp(req, res)) return;
+          if (katib.handle(req, res)) return;
           handle(req, res);
         })
       : http.createServer((req, res) => {
           if (accessGate.handleHttp(req, res)) return;
+          if (katib.handle(req, res)) return;
           handle(req, res);
         });
 
