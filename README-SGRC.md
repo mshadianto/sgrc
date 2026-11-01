@@ -43,7 +43,7 @@ sudo nano /opt/sgrc-office/.env      # isi token & SGRC_LLM_API_KEY
 sudo bash deploy/install-vps.sh      # build, pasang systemd + Caddy
 ```
 
-Default: Studio di `127.0.0.1:8099`, gateway di `127.0.0.1:18789`, Caddy `sgrc.mshadianto.id` (ganti di `deploy/sgrc.caddy` bila memakai `sgrc.tazkia.ac.id`). `STUDIO_ACCESS_TOKEN` wajib diisi karena Studio dibuka ke publik.
+Default: Studio di `127.0.0.1:8113`, gateway di `127.0.0.1:18790`, Caddy `sgrc.mshadianto.id` (ganti di `deploy/sgrc.caddy` bila memakai `sgrc.tazkia.ac.id`). `STUDIO_ACCESS_TOKEN` wajib diisi karena Studio dibuka ke publik; pengunjung masuk lewat halaman "Masukkan kode akses kantor".
 
 ## Belum dikerjakan (menuju produksi, lihat `docs/ARSITEKTUR.md` tim)
 

@@ -18,5 +18,5 @@ systemctl enable --now sgrc-gateway sgrc-studio
 systemctl restart sgrc-gateway sgrc-studio
 if [ -d /etc/caddy/conf.d ]; then cp deploy/sgrc.caddy /etc/caddy/conf.d/sgrc.caddy && systemctl reload caddy; fi
 sleep 3
-curl -fsS http://127.0.0.1:18789/health && echo
-curl -fsS -o /dev/null -w "Studio HTTP %{http_code}\n" http://127.0.0.1:8099/office || true
+curl -fsS http://127.0.0.1:18790/health && echo
+curl -fsS -o /dev/null -w "Studio HTTP %{http_code}\n" http://127.0.0.1:8113/office || true
