@@ -76,6 +76,7 @@ export type PixelGroundTile =
   | "floor_wood"
   | "carpet_purple"
   | "carpet_blue"
+  | "carpet_prayer"
   | "kitchen_tile"
   | "gym_mat"
   | "server_floor"
@@ -112,6 +113,8 @@ export type PixelObjectKind =
   | "tv_stand"
   | "whiteboard"
   | "rug"
+  | "sajadah"
+  | "mihrab"
   | "tree"
   | "flower"
   | "atm"
@@ -269,6 +272,8 @@ export const OBJECT_FOOTPRINT: Readonly<Record<PixelObjectKind, [number, number]
   tv_stand: [2, 1],
   whiteboard: [2, 1],
   rug: [2, 2],
+  sajadah: [1, 1],
+  mihrab: [2, 1],
   tree: [2, 2],
   flower: [1, 1],
   atm: [1, 1],

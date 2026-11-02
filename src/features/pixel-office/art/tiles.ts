@@ -333,6 +333,21 @@ function carpetTile(key: string, base: string, weave: string): PixelSprite {
   return makeSprite(key, { c: base, d: weave }, gridRows(g));
 }
 
+/** Karpet musholla: hijau dengan anyaman halus dan satu garis saf emas per ubin. */
+function prayerCarpetTile(): PixelSprite {
+  const g = makeGrid(T, T, "c");
+  for (let y = 0; y < T; y += 1) {
+    for (let x = 0; x < T; x += 1) {
+      if ((x + y) % 6 === 0) setPx(g, x, y, "d");
+    }
+  }
+  for (let x = 0; x < T; x += 1) {
+    setPx(g, x, 1, "s");
+    setPx(g, x, 2, "s");
+  }
+  return makeSprite("tile_carpet_prayer", { c: "#3f8f63", d: "#367f57", s: "#d8b25a" }, gridRows(g));
+}
+
 // ---------------------------------------------------------------------------
 // Kitchen.
 // ---------------------------------------------------------------------------
@@ -681,6 +696,7 @@ export function buildGroundTileSprites(): PixelSprite[] {
     woodTile("tile_floor_wood_alt", true),
     carpetTile("tile_carpet_purple", CARPET_PURPLE, CARPET_PURPLE_DOT),
     carpetTile("tile_carpet_blue", CARPET_BLUE, CARPET_BLUE_DOT),
+    prayerCarpetTile(),
     kitchenTile(),
     gymMatTile(),
     serverFloorTile(),

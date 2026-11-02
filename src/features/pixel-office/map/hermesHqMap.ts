@@ -121,7 +121,7 @@ export const buildHermesHqMap = (): PixelOfficeMap => {
   fillRect(ground, "floor_wood", 40, 2, 14, 11); // Reading nook.
   // Center + south.
   fillRect(ground, "carpet_purple", 18, 25, 16, 15); // Lounge.
-  fillRect(ground, "carpet_blue", 34, 25, 11, 9); // Game corner.
+  fillRect(ground, "carpet_prayer", 34, 25, 11, 9); // Mushala At-Taqwa.
   fillRect(ground, "server_floor", 45, 25, 9, 15); // Server room.
 
   // ---------------------------------------------------------------------
@@ -282,12 +282,22 @@ export const buildHermesHqMap = (): PixelOfficeMap => {
     obj("plant", 18, 38),
     obj("flower", 33, 38),
 
-    // Game corner.
-    obj("arcade", 36, 26),
-    obj("arcade", 38, 26),
-    obj("jukebox", 42, 26),
+    // Mushala At-Taqwa: mihrab di dinding kiblat, saf sajadah, rak mushaf.
+    obj("mihrab", 38, 25),
+    obj("sajadah", 38, 27),
+    obj("sajadah", 36, 29),
+    obj("sajadah", 37, 29),
+    obj("sajadah", 38, 29),
+    obj("sajadah", 39, 29),
+    obj("sajadah", 40, 29),
+    obj("sajadah", 36, 31),
+    obj("sajadah", 37, 31),
+    obj("sajadah", 38, 31),
+    obj("sajadah", 39, 31),
+    obj("sajadah", 40, 31),
+    obj("bookshelf", 42, 25),
     obj("plant", 34, 25),
-    obj("vending_machine", 44, 30),
+    obj("water_cooler", 44, 32),
 
     // South-east hall.
     obj("water_cooler", 35, 36),
@@ -367,8 +377,8 @@ export const buildHermesHqMap = (): PixelOfficeMap => {
     station("library", 45, 9, "down"),
     station("ping_pong", 28, 34, "right"),
     station("ping_pong", 32, 34, "left"),
-    station("arcade", 36, 27, "up"),
-    station("arcade", 38, 27, "up"),
+    station("wander", 37, 30, "up"),
+    station("wander", 39, 30, "up"),
     station("wander", 27, 20, "down"),
     station("wander", 21, 11, "down"),
     station("wander", 35, 11, "down"),

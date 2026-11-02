@@ -68,6 +68,7 @@ function FramedPicture({
   );
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function UsaFlagArt() {
   const flagWidth = 0.52;
   const flagHeight = 0.3;
@@ -118,6 +119,159 @@ function UsaFlagArt() {
   );
 }
 
+function IndonesiaFlagArt() {
+  const flagWidth = 0.52;
+  const flagHeight = 0.3;
+  return (
+    <>
+      <mesh position={[0, flagHeight / 4, 0]}>
+        <planeGeometry args={[flagWidth, flagHeight / 2]} />
+        <meshBasicMaterial color="#ce1126" side={2} />
+      </mesh>
+      <mesh position={[0, -flagHeight / 4, 0]}>
+        <planeGeometry args={[flagWidth, flagHeight / 2]} />
+        <meshBasicMaterial color="#ffffff" side={2} />
+      </mesh>
+    </>
+  );
+}
+
+/**
+ * Mushala At-Taqwa — bangunan kecil di sisi barat kantor.
+ * Karpet hijau bergaris saf menghadap dinding kiblat (barat) dengan mihrab,
+ * kubah kecil, dan menara berbulan sabit. Murni dekorasi (tidak mengubah navigasi).
+ */
+function Mushola3D() {
+  // Pusat bangunan dalam koordinat kanvas (barat kantor), lalu ke dunia.
+  const [cx, , cz] = toWorld(-210, LOCAL_OFFICE_CANVAS_HEIGHT / 2);
+  const w = 5.2; // arah x (timur-barat)
+  const d = 6.4; // arah z (utara-selatan)
+  const wallH = 1.65;
+  const qiblaX = cx - w / 2 + 0.08;
+  const saf = [0, 1, 2, 3, 4];
+  return (
+    <group>
+      {/* Lantai dasar */}
+      <mesh position={[cx, 0.04, cz]} receiveShadow>
+        <boxGeometry args={[w, 0.08, d]} />
+        <meshStandardMaterial color="#e9e2d0" roughness={0.9} />
+      </mesh>
+      {/* Karpet hijau */}
+      <mesh position={[cx + 0.15, 0.085, cz]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[w - 0.9, d - 0.7]} />
+        <meshStandardMaterial color="#2f7a52" roughness={0.95} />
+      </mesh>
+      {/* Garis saf (sejajar dinding kiblat) */}
+      {saf.map((i) => (
+        <mesh
+          key={`saf-${i}`}
+          position={[qiblaX + 0.95 + i * 0.78, 0.088, cz]}
+          rotation={[-Math.PI / 2, 0, 0]}
+        >
+          <planeGeometry args={[0.04, d - 0.8]} />
+          <meshBasicMaterial color="#d8b25a" />
+        </mesh>
+      ))}
+      {/* Sajadah imam di depan mihrab */}
+      <mesh position={[qiblaX + 0.55, 0.09, cz]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[0.7, 0.42]} />
+        <meshStandardMaterial color="#8c1d2c" roughness={0.9} />
+      </mesh>
+      {/* Dinding kiblat (barat) */}
+      <mesh position={[qiblaX - 0.02, wallH / 2 + 0.08, cz]} castShadow receiveShadow>
+        <boxGeometry args={[0.14, wallH, d]} />
+        <meshStandardMaterial color="#f4efe4" roughness={0.92} />
+      </mesh>
+      {/* Mihrab: ceruk + lengkung */}
+      <mesh position={[qiblaX + 0.06, 0.62, cz]}>
+        <boxGeometry args={[0.04, 1.0, 0.7]} />
+        <meshStandardMaterial color="#1f5a3e" roughness={0.8} />
+      </mesh>
+      <mesh position={[qiblaX + 0.06, 1.12, cz]} rotation={[0, Math.PI / 2, 0]}>
+        <circleGeometry args={[0.35, 24, 0, Math.PI]} />
+        <meshStandardMaterial color="#1f5a3e" roughness={0.8} side={2} />
+      </mesh>
+      <mesh position={[qiblaX + 0.07, 1.12, cz]} rotation={[0, Math.PI / 2, 0]}>
+        <torusGeometry args={[0.37, 0.03, 8, 24, Math.PI]} />
+        <meshStandardMaterial color="#d4af37" metalness={0.7} roughness={0.3} />
+      </mesh>
+      {/* Dinding samping rendah (utara & selatan) */}
+      {[-1, 1].map((side) => (
+        <mesh key={`sw-${side}`} position={[cx, 0.43, cz + side * (d / 2 - 0.07)]} castShadow>
+          <boxGeometry args={[w, 0.7, 0.12]} />
+          <meshStandardMaterial color="#f4efe4" roughness={0.92} />
+        </mesh>
+      ))}
+      {/* Kubah di atas dinding kiblat */}
+      <mesh position={[qiblaX + 0.2, wallH + 0.08, cz]} castShadow>
+        <cylinderGeometry args={[0.62, 0.62, 0.18, 24]} />
+        <meshStandardMaterial color="#f4efe4" roughness={0.9} />
+      </mesh>
+      <mesh position={[qiblaX + 0.2, wallH + 0.17, cz]} castShadow>
+        <sphereGeometry args={[0.6, 28, 16, 0, Math.PI * 2, 0, Math.PI / 2]} />
+        <meshStandardMaterial color="#1f7a4d" roughness={0.45} metalness={0.15} />
+      </mesh>
+      <mesh position={[qiblaX + 0.2, wallH + 0.86, cz]}>
+        <cylinderGeometry args={[0.015, 0.015, 0.22, 8]} />
+        <meshStandardMaterial color="#d4af37" metalness={0.8} roughness={0.25} />
+      </mesh>
+      <mesh position={[qiblaX + 0.2, wallH + 1.03, cz]} rotation={[0, Math.PI / 2, Math.PI / 2 + 0.6]}>
+        <torusGeometry args={[0.09, 0.02, 8, 20, Math.PI * 1.3]} />
+        <meshStandardMaterial color="#d4af37" metalness={0.8} roughness={0.25} />
+      </mesh>
+      {/* Menara di sudut barat laut */}
+      <group position={[qiblaX + 0.1, 0, cz - d / 2 + 0.35]}>
+        <mesh position={[0, 1.35, 0]} castShadow>
+          <cylinderGeometry args={[0.2, 0.24, 2.7, 16]} />
+          <meshStandardMaterial color="#f4efe4" roughness={0.9} />
+        </mesh>
+        <mesh position={[0, 2.3, 0]}>
+          <cylinderGeometry args={[0.3, 0.3, 0.08, 16]} />
+          <meshStandardMaterial color="#d4af37" metalness={0.6} roughness={0.35} />
+        </mesh>
+        <mesh position={[0, 2.82, 0]} castShadow>
+          <coneGeometry args={[0.22, 0.5, 16]} />
+          <meshStandardMaterial color="#1f7a4d" roughness={0.45} />
+        </mesh>
+        <mesh position={[0, 3.18, 0]} rotation={[0, Math.PI / 2, Math.PI / 2 + 0.6]}>
+          <torusGeometry args={[0.07, 0.016, 8, 20, Math.PI * 1.3]} />
+          <meshStandardMaterial color="#d4af37" metalness={0.8} roughness={0.25} />
+        </mesh>
+      </group>
+      {/* Rak mushaf di dinding selatan */}
+      <mesh position={[cx + 1.4, 0.5, cz + d / 2 - 0.3]} castShadow>
+        <boxGeometry args={[1.0, 0.8, 0.3]} />
+        <meshStandardMaterial color="#7a5232" roughness={0.8} />
+      </mesh>
+      {[0, 1, 2, 3, 4, 5].map((i) => (
+        <mesh key={`mushaf-${i}`} position={[cx + 1.0 + i * 0.15, 0.72, cz + d / 2 - 0.42]}>
+          <boxGeometry args={[0.08, 0.22, 0.14]} />
+          <meshStandardMaterial color={i % 2 ? "#1f5a3e" : "#8c1d2c"} roughness={0.7} />
+        </mesh>
+      ))}
+      {/* Papan nama */}
+      <mesh position={[cx + w / 2 - 0.05, 0.95, cz - 1.8]} rotation={[0, Math.PI / 2, 0]}>
+        <planeGeometry args={[1.5, 0.32]} />
+        <meshStandardMaterial color="#1f5a3e" roughness={0.6} side={2} />
+      </mesh>
+      <mesh position={[cx + w / 2 - 0.08, 0.95, cz - 1.8]} rotation={[0, Math.PI / 2, 0]}>
+        <planeGeometry args={[1.38, 0.05]} />
+        <meshBasicMaterial color="#d4af37" side={2} />
+      </mesh>
+      {/* Tempat wudhu */}
+      <mesh position={[cx + w / 2 - 0.45, 0.32, cz + d / 2 - 0.6]} castShadow>
+        <boxGeometry args={[0.5, 0.48, 0.5]} />
+        <meshStandardMaterial color="#c9d6dc" roughness={0.5} />
+      </mesh>
+      <mesh position={[cx + w / 2 - 0.45, 0.57, cz + d / 2 - 0.6]}>
+        <boxGeometry args={[0.42, 0.02, 0.42]} />
+        <meshStandardMaterial color="#7fb6d6" roughness={0.2} metalness={0.2} />
+      </mesh>
+    </group>
+  );
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function BrazilFlagArt() {
   return (
     <>
@@ -811,16 +965,17 @@ export const WallPictures = memo(function WallPictures({
 
   return (
     <group>
+      <Mushola3D />
       <OfficeFlagPole
         position={localFlagPolePosition}
         rotY={0.32}
-        art={<UsaFlagArt />}
+        art={<IndonesiaFlagArt />}
       />
       {showRemoteOffice ? (
         <OfficeFlagPole
           position={remoteFlagPolePosition}
           rotY={0.32}
-          art={<BrazilFlagArt />}
+          art={<IndonesiaFlagArt />}
         />
       ) : null}
 

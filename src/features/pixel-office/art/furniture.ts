@@ -1592,6 +1592,52 @@ function rug(): PixelSprite {
   return sprite("rug", g);
 }
 
+/** Sajadah: alas shalat merah dengan lengkung mihrab di ujung kiblat (kiri). */
+function sajadah(): PixelSprite {
+  const g = gridFor("sajadah", 32);
+  for (let y = 2; y < 30; y += 1) {
+    for (let x = 9; x < 23; x += 1) {
+      const edge = y === 2 || y === 29 || x === 9 || x === 22;
+      setPx(g, x, y, edge ? "y" : "r");
+    }
+  }
+  // Lengkung mihrab di ujung kiblat (atas).
+  for (let y = 4; y < 12; y += 1) {
+    for (let x = 11; x < 21; x += 1) {
+      const dx = x - 15.5;
+      const dy = y - 11;
+      if (dx * dx + dy * dy <= 22) setPx(g, x, y, "0");
+    }
+  }
+  for (let y = 14; y < 28; y += 2) setPx(g, 15, y, "y");
+  return sprite("sajadah", g);
+}
+
+/** Mihrab: ceruk hijau berlengkung emas di dinding kiblat. */
+function mihrab(): PixelSprite {
+  const g = gridFor("mihrab", 48);
+  const w = 64;
+  const cx = w / 2 - 0.5;
+  for (let y = 4; y < 46; y += 1) {
+    for (let x = 10; x < 54; x += 1) {
+      const top = y < 22;
+      const dx = (x - cx) / 22;
+      const dy = (y - 22) / 18;
+      if (top && dx * dx + dy * dy > 1) continue;
+      const inner = top ? (x - cx) ** 2 / 18 ** 2 + (y - 23) ** 2 / 15 ** 2 <= 1 : x > 13 && x < 50;
+      setPx(g, x, y, inner ? "5" : "y");
+    }
+  }
+  // Lampu gantung kecil.
+  setPx(g, 31, 16, "Y");
+  setPx(g, 32, 16, "Y");
+  setPx(g, 31, 17, "a");
+  setPx(g, 32, 17, "a");
+  hLine(g, 8, 46, 48, "W");
+  hLine(g, 8, 47, 48, "W");
+  return sprite("mihrab", g);
+}
+
 function lamp(): PixelSprite {
   const g = gridFor("lamp", 60);
   drawShadow(g, 8, 57, 16);
@@ -1732,6 +1778,8 @@ export function buildFurnitureSprites(): PixelSprite[] {
     tvStand(),
     whiteboard(),
     rug(),
+    sajadah(),
+    mihrab(),
     tree(),
     flower(),
     atm(),
